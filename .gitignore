@@ -1,0 +1,25 @@
+# Secrets
+.env
+.env.local
+*.local
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+
+# Database — regenerated on first run
+*.db
+*.sqlite3
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+
+# Editors / OS
+.DS_Store
+.vscode/
+.idea/
