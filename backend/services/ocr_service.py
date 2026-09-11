@@ -32,14 +32,32 @@ BEST_BEFORE_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
+# A date is only a date if it is not glued to more digits or another separator.
+# Without these guards the short-year pattern happily matched "12/08/20" inside
+# "12/08/2026", and the month-year pattern matched "01/2025" inside "10/01/2025",
+# inventing dates that were never printed on the pack.
+_B = r"(?<![\d/.\-])"
+_E = r"(?![\d/.\-])"
+
+# Order matters: the first pattern that matches wins, so the most specific and
+# least ambiguous forms are tried first. ISO leads because a day-first reading
+# of "2026-08-15" is both plausible and badly wrong.
 DATE_PATTERNS = [
-    (re.compile(r"(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{4})"), "dmy_full"),
-    (re.compile(r"(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{2})"), "dmy_short"),
-    (re.compile(r"(\d{4})[/\-.](\d{1,2})[/\-.](\d{1,2})"), "ymd"),
-    (re.compile(r"(\d{1,2})[/\-.](\d{4})"), "my"),
-    (re.compile(r"([A-Za-z]{3,9})\s*[,.]?\s*(\d{4})"), "month_year"),
-    (re.compile(r"(\d{1,2})\s*[,.]?\s*([A-Za-z]{3,9})\s*[,.]?\s*(\d{4})"), "d_month_y"),
+    (re.compile(_B + r"(\d{4})[/\-.](\d{1,2})[/\-.](\d{1,2})" + _E), "ymd"),
+    (re.compile(_B + r"(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{4})" + _E), "dmy_full"),
+    (re.compile(_B + r"(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{2})" + _E), "dmy_short"),
+    (re.compile(_B + r"(\d{1,2})\s*[,.]?\s*([A-Za-z]{3,9})\s*[,.]?\s*(\d{4})" + _E), "d_month_y"),
+    (re.compile(r"([A-Za-z]{3,9})\s*[,.]?\s*(\d{4})" + _E), "month_year"),
+    (re.compile(_B + r"(\d{1,2})[/\-.](\d{4})" + _E), "my"),
+    (re.compile(_B + r"(\d{1,2})[/\-](\d{2})" + _E), "my_short"),
+    (re.compile(_B + r"(\d{1,2})\s+(\d{4})" + _E), "m_space_y"),
 ]
+
+
+# Two-token forms. They are safe once an EXP/MFG label has told us a date is
+# coming, but far too loose to volunteer one from unlabelled packaging text,
+# where a batch number or a price reads the same way.
+WEAK_PATTERNS = {"my_short", "m_space_y"}
 
 
 def _parse_date(text: str) -> datetime | None:
@@ -65,11 +83,22 @@ def _parse_date(text: str) -> datetime | None:
             elif fmt == "ymd":
                 y, m, d = int(match.group(1)), int(match.group(2)), int(match.group(3))
                 return datetime(y, m, d)
-            elif fmt == "my":
+            elif fmt in ("my", "m_space_y"):
                 m, y = int(match.group(1)), int(match.group(2))
                 if m > 12:
                     m, y = y, m
                 return datetime(y, m, 1)
+            elif fmt == "my_short":
+                # "07/26" and, less often, "26/07". Two digits either side, so
+                # the only thing separating month from year is the 1-12 range.
+                a, b = int(match.group(1)), int(match.group(2))
+                if a > 12 and b <= 12:
+                    a, b = b, a
+                year = b + 2000
+                this_year = datetime.now().year
+                if not (this_year - 10 <= year <= this_year + 20):
+                    continue
+                return datetime(year, a, 1)
             elif fmt == "month_year":
                 month_str = match.group(1).lower()
                 y = int(match.group(2))
@@ -127,6 +156,8 @@ def parse_dates_from_text(raw_text: str) -> dict:
     if not mfg_date and not expiry_date:
         dates = []
         for pattern, fmt in DATE_PATTERNS:
+            if fmt in WEAK_PATTERNS:
+                continue
             for m in pattern.finditer(lines):
                 parsed = _parse_date(m.group())
                 if parsed and 2020 <= parsed.year <= 2030:

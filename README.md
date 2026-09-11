@@ -123,6 +123,32 @@ Not verified, and worth doing before this is called finished:
   with a camera; they have never been exercised end to end here.
 - **Gemini Vision.** No API key has been configured, so
   `extract_dates_with_gemini` has never run against the live API.
-- **No tests.** There is no test suite for the date parser, which is the
-  riskiest code in the project — `parse_dates_from_text` handles a lot of label
-  variants and a regression there would be silent.
+## Tests
+
+The date parser is the riskiest code in the project: a regression there is
+silent, because a product still gets logged, just with the wrong expiry.
+`backend/tests/test_ocr_parsing.py` covers it with 46 cases drawn from real
+Indian retail label formats — both dates printed, expiry only, ISO dates,
+spelled-out months, two-digit years, best-before durations, unlabelled dates,
+and text with no date at all — plus the expiry, status and alert logic that
+consumes the result.
+
+```bash
+cd backend
+source .venv/bin/activate
+pip install -r requirements-dev.txt
+pytest tests/ -q
+```
+
+Writing them surfaced four parsing bugs, since fixed:
+
+- `EXP 2026-08-15` was read as 26 Aug **2015**, because the day-first pattern
+  matched the tail of the ISO date. A fresh product was logged as expired.
+- Unlabelled panels picked up phantom dates — `12/08/2026` also matched as
+  `12/08/20`, so a single printed date produced both an mfg and an expiry.
+- `05 JAN 2025` collapsed to the 1st of the month; the day was discarded.
+- `07/26` and `EXP 12 2026` parsed to nothing at all.
+
+Those last two forms are only read after an explicit `EXP` or `MFG` label. On
+unlabelled text a batch number or a decimal price looks exactly the same, so
+`Batch 12/26 MRP 45.00` is correctly read as having no date on it.
