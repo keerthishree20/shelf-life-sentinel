@@ -84,7 +84,7 @@ http://localhost:8001/docs.
 | `DATABASE_URL` | `backend/.env` | `sqlite+aiosqlite:///./shelflife.db` | Relative to the launch directory |
 | `EXPIRY_WARNING_DAYS` | `backend/.env` | `7` | Days ahead that count as "expiring soon" |
 | `GOOGLE_API_KEY` | `backend/.env` | *(empty)* | Optional — enables Gemini Vision date reading |
-| `NEXT_PUBLIC_API_URL` | `frontend/.env.local` | `http://localhost:8000` | Set it to `:8001` to match the backend |
+| `NEXT_PUBLIC_API_URL` | `frontend/.env.local` | `http://localhost:8001` | Matches the backend's port |
 
 Without `GOOGLE_API_KEY` the app is fully functional — `/api/scan/ocr-status`
 reports `gemini_available: false` and the scanner uses Tesseract plus manual

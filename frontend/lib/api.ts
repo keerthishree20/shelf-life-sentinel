@@ -9,7 +9,9 @@ import type {
   ScanLog,
 } from "./types";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+// 8001 is where the backend runs and what its CORS policy expects the frontend
+// to call. The old 8000 fallback sent every request to the wrong port.
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001";
 
 async function fetchAPI<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${API_URL}/api${path}`, {
