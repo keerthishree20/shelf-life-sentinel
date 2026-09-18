@@ -44,7 +44,9 @@ async def extract_dates_with_gemini(image_bytes: bytes) -> dict | None:
     try:
         import google.generativeai as genai
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-2.0-flash")
+        # gemini-2.0-flash was retired and returned 404 on every call. The
+        # model is a setting so the next retirement is an .env edit.
+        model = genai.GenerativeModel(os.getenv("GEMINI_MODEL", "gemini-3.6-flash"))
 
         response = model.generate_content([
             PROMPT,

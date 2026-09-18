@@ -47,7 +47,7 @@ than stored as a duration.
 - **Frontend** — Next.js 16 (App Router), React 19, Tailwind CSS v4, Recharts,
   `html5-qrcode` for camera scanning, `tesseract.js` for on-device OCR
 - **Backend** — FastAPI, SQLAlchemy 2.0 (async), SQLite via `aiosqlite`
-- **Vision** — Google Gemini (`gemini-2.0-flash`), optional
+- **Vision** — Google Gemini (`gemini-3.6-flash` by default, set with `GEMINI_MODEL`), optional
 
 ## Running it
 
@@ -121,8 +121,13 @@ Not verified, and worth doing before this is called finished:
 
 - **The camera paths.** Barcode scanning and photo capture need a real device
   with a camera; they have never been exercised end to end here.
-- **Gemini Vision.** No API key has been configured, so
-  `extract_dates_with_gemini` has never run against the live API.
+
+**Gemini Vision, verified on 2026-09-18.** The original `gemini-2.0-flash` had
+been retired and returned 404, so date reading from photos never worked. The
+model is now `GEMINI_MODEL`, default `gemini-3.6-flash`. Against the live API, a
+label reading `PKD: 12/03/2026` and `EXP: 11/09/2026` came back as manufactured
+12 March and expiring 11 September 2026, day-first as printed.
+
 ## Tests
 
 The date parser is the riskiest code in the project: a regression there is

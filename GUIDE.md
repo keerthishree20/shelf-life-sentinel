@@ -132,7 +132,7 @@ Defined in `backend/models/product.py`. Tables are created on startup by `databa
 | `services/gs1_service.py` | `is_gs1_barcode()`, `parse_gs1_barcode()` for application identifiers such as `17` expiry and `10` batch |
 | `services/barcode_service.py` | `lookup_product()` checks the local database, then `lookup_open_food_facts()` for name, brand and category |
 | `services/ocr_service.py` | `parse_dates_from_text()` finds mfg and expiry dates in OCR text. The riskiest code in the project |
-| `services/gemini_service.py` | `is_gemini_available()`, `extract_dates_with_gemini(image_bytes)` using `gemini-2.0-flash` |
+| `services/gemini_service.py` | `is_gemini_available()`, `extract_dates_with_gemini(image_bytes)` using the model in `GEMINI_MODEL`, default `gemini-3.6-flash` |
 | `services/expiry_service.py` | `compute_status()`, `days_until_expiry()`, `compute_expiry_from_mfg()`, `should_generate_alert()` |
 | `services/alert_service.py` | `create_alert_if_needed()`, `get_active_alerts()`, `mark_alert_read()`, `refresh_alerts()` |
 | `database.py` | the async engine, sessions, and table creation |
@@ -203,6 +203,7 @@ All routes are under `/api`.
 | `DATABASE_URL` | `backend/.env` | `sqlite+aiosqlite:///./shelflife.db` | relative to where the backend starts |
 | `EXPIRY_WARNING_DAYS` | `backend/.env` | `7` | days ahead that count as expiring |
 | `GOOGLE_API_KEY` | `backend/.env` | empty | optional. Enables Gemini Vision |
+| `GEMINI_MODEL` | `backend/.env` | `gemini-3.6-flash` | change it when Google retires the model |
 | `NEXT_PUBLIC_API_URL` | `frontend/.env.local` | `http://localhost:8001` | matches the backend's port |
 
 ---
@@ -230,8 +231,10 @@ silent: the product still saves, with the wrong date.
 ## What Is and Is Not Verified
 
 - **Verified:** the backend serves all routes, CORS from `:3001` works, and the frontend builds.
-- **Not verified:** the camera paths, which need a real device, and Gemini Vision, which has never
-  run with a real key.
+- **Verified 2026-09-18:** Gemini Vision reads a date label correctly against the live API, after
+  the retired `gemini-2.0-flash` was replaced.
+- **Not verified:** the camera paths, which need a phone. Open the app on a phone over HTTPS and scan
+  one barcode and one date label.
 - **Not deployed.**
 
 ---
