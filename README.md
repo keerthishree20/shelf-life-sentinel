@@ -1,5 +1,7 @@
 # ShelfLife Sentinel
 
+[![tests](https://github.com/keerthishree20/shelf-life-sentinel/actions/workflows/tests.yml/badge.svg)](https://github.com/keerthishree20/shelf-life-sentinel/actions/workflows/tests.yml)
+
 Catches expired stock **before** it reaches the till, instead of after a customer
 complains. Scan a barcode or photograph the date panel; the product is logged
 with its expiry, classified fresh / expiring / expired, and surfaced on a
